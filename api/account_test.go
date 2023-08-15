@@ -8,17 +8,20 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
-	mockdb "simplebank/db/mock"
-	db "simplebank/db/sqlc"
-	"simplebank/utils"
 	"testing"
+
+	mockdb "github.com/fernandomartinsrib/simplebank/db/mock"
+
+	"github.com/fernandomartinsrib/simplebank/utils"
+
+	db "github.com/fernandomartinsrib/simplebank/db/sqlc"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 )
 
 func TestGetAccountAPI(t *testing.T) {
-	account := randomAccount()
+	account := randomAccount("amxbka")
 
 	testCases := []struct {
 		name          string
@@ -105,10 +108,10 @@ func TestGetAccountAPI(t *testing.T) {
 	}
 }
 
-func randomAccount() db.Account {
+func randomAccount(owner string) db.Account {
 	return db.Account{
 		ID:       utils.RandomInt(1, 1000),
-		Owner:    utils.RandomOwner(),
+		Owner:    owner,
 		Balance:  utils.RandomMoney(),
 		Currency: utils.RandomCurrency(),
 	}
