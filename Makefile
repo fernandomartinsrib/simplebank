@@ -39,4 +39,16 @@ server:
 mock:
 	mockgen -package mockdb -destination db/mock/store.go github.com/fernandomartinsrib/simplebank/db/sqlc Store
 
-.PHONY: postgres createdb dropdb migrateup migratedown migrateup1 migratedown1 db_docs db_schema sqlc test server mock
+proto:
+	rm -rf pb/*.go
+	rm -rf doc/swagger/*.swagger.json
+	protoc --proto_path=proto --go_out=pb --go_opt=paths=source_relative \
+    --go-grpc_out=pb --go-grpc_opt=paths=source_relative \
+	--grpc-gateway_out=pb --grpc-gateway_opt=paths=source_relative \
+	--openapiv2_out=doc/swagger --openapiv2_opt=allow_merge,merge_file_name=simple_bank \
+    proto/*.proto
+
+evans:
+	evans -r repl --host localhost --port 9090 
+
+.PHONY: postgres createdb dropdb migrateup migratedown migrateup1 migratedown1 db_docs db_schema sqlc test server mock proto evansmoodle.utfpr.edu.br
