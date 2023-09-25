@@ -6,8 +6,6 @@ package db
 
 import (
 	"context"
-	_ "database/sql"
-	_ "time"
 
 	"github.com/google/uuid"
 )
