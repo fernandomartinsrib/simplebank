@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	db "github.com/fernandomartinsrib/simplebank/db/sqlc"
+	"github.com/fernandomartinsrib/simplebank/utils"
 	"github.com/hibiken/asynq"
 	"github.com/rs/zerolog/log"
 )
@@ -15,6 +17,10 @@ const TaskSenderVerifyEmail = "task:send_verify_email"
 type PayloadSendVerifyEmail struct {
 	Username string `json:"username"`
 }
+
+const (
+	environment = "local"
+)
 
 func (distributor *RedisTaskDistributor) DistributeTaskSendVerifyEmail(ctx context.Context, payload *PayloadSendVerifyEmail, opts ...asynq.Option) error {
 	jsonPayload, err := json.Marshal(payload)
@@ -53,7 +59,36 @@ func (processor *RedisTaskProcessor) ProcessTaskSendVerifyEmail(ctx context.Cont
 		return fmt.Errorf("failed to get user: %w", err)
 	}
 
-	// TODO: send email to user
+	verifyEmail, err := processor.store.CreateVerifyEmail(ctx, db.CreateVerifyEmailParams{
+		Username:   user.Username,
+		Email:      user.Email,
+		SecretCode: utils.RandomString(32),
+	})
+
+	if err != nil {
+		return fmt.Errorf("failed to create verify email: %w", err)
+	}
+
+	subject := "Welcome to payGo!"
+
+	domain := "http://paygo-bank.net"
+	if environment == "local" {
+		domain = "http://localhost:8080"
+	}
+
+	verifyUrl := fmt.Sprintf("%s/v1/verify_email?email_id=%d&secret_code=%s", domain, verifyEmail.ID, verifyEmail.SecretCode)
+
+	to := []string{user.Email}
+
+	content := fmt.Sprintf(`Hello %s,<br/>
+	Thank you for registering with us!<br/>
+	Please <a href="%s">click here</a> to verify your email address.<br/>
+	`, user.Fullname, verifyUrl)
+
+	err = processor.mailer.SendEmail(subject, content, to, nil, nil, nil)
+	if err != nil {
+		return fmt.Errorf("failed to send verify email: %w", err)
+	}
 
 	log.Info().
 		Str("type", task.Type()).
