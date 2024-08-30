@@ -37,6 +37,8 @@ import (
 var assets embed.FS
 
 func main() {
+	log.Info().Msg("starting app")
+
 	config, err := utils.LoadConfig(".")
 	if err != nil {
 		log.Fatal().Msg("cannot load configs")
