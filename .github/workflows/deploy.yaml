@@ -49,8 +49,11 @@ jobs:
         docker push -a $ECR_REGISTRY/$ECR_REPOSITORY
 
     - name: Update Kube Config
-      run: aws eks update-kubeconfig --name simple-bank --region eu-north-1
+      run: aws eks update-kubeconfig --name simple-bank --region eu-north-1 --role-arn arn:aws:iam::387383204901:role/AWSEKSClusterRole
     
+    - name: Check Kube Config
+      run: kubectl config view
+
     - name: Deploy image to Amazon EKS
       run: |
         kubectl apply -f eks/aws-auth.yaml --validate=false
