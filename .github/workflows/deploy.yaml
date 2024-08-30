@@ -20,7 +20,7 @@ jobs:
     - name: Install Kubectl
       uses: azure/setup-kubectl@v3
       with:
-        version: 'v1.30.0'
+        version: 'v1.31.0'
       id: install
 
     - name: Configure AWS credentials
@@ -49,16 +49,16 @@ jobs:
         docker push -a $ECR_REGISTRY/$ECR_REPOSITORY
 
     - name: Update Kube Config
-      run: aws eks update-kubeconfig --name simple-bank --region eu-north-1 --role-arn arn:aws:iam::387383204901:role/AWSEKSClusterRole
+      run: aws eks update-kubeconfig --name simple-bank --region eu-north-1
     
     - name: Check Kube Config
       run: kubectl config view
 
     - name: Deploy image to Amazon EKS
       run: |
-        kubectl apply -f eks/aws-auth.yaml --validate=false
-        kubectl apply -f eks/deployment.yaml --validate=false
-        kubectl apply -f eks/service.yaml --validate=false
-        kubectl apply -f eks/issuer.yaml --validate=false
-        kubectl apply -f eks/ingress.yaml --validate=false
+        kubectl apply -f eks/aws-auth.yaml
+        kubectl apply -f eks/deployment.yaml
+        kubectl apply -f eks/service.yaml
+        kubectl apply -f eks/issuer.yaml
+        kubectl apply -f eks/ingress.yaml
         
