@@ -166,7 +166,7 @@ func Assets() (fs.FS, error) {
 func runDBMigration(migrationURL string, dbSource string) {
 	migration, err := migrate.New(migrationURL, dbSource)
 	if err != nil {
-		log.Fatal().Msg("cannot create new migrate instance: ")
+		log.Fatal().Msgf("cannot create new migrate instance: %s", err.Error())
 	}
 
 	if err = migration.Up(); err != nil && err != migrate.ErrNoChange {
