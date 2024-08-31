@@ -9,13 +9,10 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: simple-bank-ingress
-  annotations:
-    cert-manager.io/cluster-issuer: letsencrypt
 spec:
   ingressClassName: nginx
   rules:
-  - host: "api.paygo-bank.net"
-    http:
+  - http:
       paths:
       - pathType: Prefix
         path: "/"
@@ -24,7 +21,3 @@ spec:
             name: simple-bank-api-service
             port:
               number: 80
-  tls:
-  - hosts:
-    - api.paygo-bank.net
-    secretName: simple-bank-api-cert
