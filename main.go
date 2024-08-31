@@ -58,19 +58,19 @@ func main() {
 
 	store := db.NewStore(conn)
 
-	redisOpt := asynq.RedisClientOpt{
-		Addr: config.RedisAddress,
-	}
+	// redisOpt := asynq.RedisClientOpt{
+	// 	Addr: config.RedisAddress,
+	// }
 
-	taskDistributor := worker.NewRedisTaskDistributor(redisOpt)
+	// taskDistributor := worker.NewRedisTaskDistributor(redisOpt)
 
-	go runTaskProcessor(config, redisOpt, store)
-	go runGatewayServer(config, store, taskDistributor)
-	runGrpcServer(config, store, taskDistributor)
+	// go runTaskProcessor(config, redisOpt, store)
+	go runGatewayServer(config, store)
+	runGrpcServer(config, store)
 }
 
-func runGrpcServer(config utils.Config, store db.Store, taskDistributor worker.TaskDistributor) {
-	server, err := gapi.NewServer(config, store, taskDistributor)
+func runGrpcServer(config utils.Config, store db.Store) {
+	server, err := gapi.NewServer(config, store)
 	if err != nil {
 		log.Fatal().Msg("cannot create server")
 	}
@@ -94,8 +94,8 @@ func runGrpcServer(config utils.Config, store db.Store, taskDistributor worker.T
 	}
 }
 
-func runGatewayServer(config utils.Config, store db.Store, taskDistributor worker.TaskDistributor) {
-	server, err := gapi.NewServer(config, store, taskDistributor)
+func runGatewayServer(config utils.Config, store db.Store) {
+	server, err := gapi.NewServer(config, store)
 	if err != nil {
 		log.Fatal().Msg("cannot create server")
 	}
