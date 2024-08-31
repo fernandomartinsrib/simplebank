@@ -2,14 +2,11 @@ package gapi
 
 import (
 	"context"
-	"time"
 
 	db "github.com/fernandomartinsrib/simplebank/db/sqlc"
 	"github.com/fernandomartinsrib/simplebank/pb"
 	"github.com/fernandomartinsrib/simplebank/utils"
 	"github.com/fernandomartinsrib/simplebank/validation"
-	"github.com/fernandomartinsrib/simplebank/worker"
-	"github.com/hibiken/asynq"
 	"github.com/lib/pq"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
@@ -27,29 +24,36 @@ func (server *Server) CreateUser(ctx context.Context, req *pb.CreateUserRequest)
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	arg := db.CreateUserTxParams{
-		CreateUserParams: db.CreateUserParams{
-			Username:       req.GetUsername(),
-			HashedPassword: hashedPassword,
-			Fullname:       req.GetFullName(),
-			Email:          req.GetEmail(),
-		},
-		AfterCreate: func(user db.User) error {
-			taskPayload := &worker.PayloadSendVerifyEmail{
-				Username: user.Username,
-			}
-
-			opts := []asynq.Option{
-				asynq.MaxRetry(10),
-				asynq.ProcessIn(10 * time.Second),
-				asynq.Queue(worker.QueueCritical),
-			}
-
-			return server.taskDistributor.DistributeTaskSendVerifyEmail(ctx, taskPayload, opts...)
-		},
+	arg := db.CreateUserParams{
+		Username:       req.GetUsername(),
+		HashedPassword: hashedPassword,
+		Fullname:       req.GetFullName(),
+		Email:          req.GetEmail(),
 	}
 
-	txResult, err := server.store.CreateUserTx(ctx, arg)
+	// arg := db.CreateUserTxParams{
+	// 	CreateUserParams: db.CreateUserParams{
+	// 		Username:       req.GetUsername(),
+	// 		HashedPassword: hashedPassword,
+	// 		Fullname:       req.GetFullName(),
+	// 		Email:          req.GetEmail(),
+	// 	},
+	// 	AfterCreate: func(user db.User) error {
+	// 		taskPayload := &worker.PayloadSendVerifyEmail{
+	// 			Username: user.Username,
+	// 		}
+
+	// 		opts := []asynq.Option{
+	// 			asynq.MaxRetry(10),
+	// 			asynq.ProcessIn(10 * time.Second),
+	// 			asynq.Queue(worker.QueueCritical),
+	// 		}
+
+	// 		return server.taskDistributor.DistributeTaskSendVerifyEmail(ctx, taskPayload, opts...)
+	// 	},
+	// }
+
+	user, err := server.store.CreateUser(ctx, arg)
 	if err != nil {
 		if pgErr, ok := err.(*pq.Error); ok {
 			switch pgErr.Code.Name() {
@@ -62,7 +66,7 @@ func (server *Server) CreateUser(ctx context.Context, req *pb.CreateUserRequest)
 	}
 
 	resp := &pb.CreateUserResponse{
-		User: convertUser(txResult.User),
+		User: convertUser(user),
 	}
 
 	return resp, nil
